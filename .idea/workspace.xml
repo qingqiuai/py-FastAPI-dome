@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1bad5926-d623-40be-b006-15aebd13c4f9" name="更改" comment="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/misc.xml&#10;#&#9;.idea/py-FastAPI-dome.iml&#10;#&#9;app/models.py&#10;#&#9;app/routers/deliver.py&#10;#&#9;app/routers/load.py&#10;#&#9;app/routers/transport.py&#10;#&#9;app/schemas.py&#10;#&#9;requirements.txt">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routers/load.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/routers/load.py" afterDir="false" />
-    </list>
+    <list default="true" id="1bad5926-d623-40be-b006-15aebd13c4f9" name="更改" comment="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/misc.xml&#10;#&#9;.idea/py-FastAPI-dome.iml&#10;#&#9;app/models.py&#10;#&#9;app/routers/deliver.py&#10;#&#9;app/routers/load.py&#10;#&#9;app/routers/transport.py&#10;#&#9;app/schemas.py&#10;#&#9;requirements.txt" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,6 +15,7 @@
       <list>
         <option value="FastAPI main" />
         <option value="FastAPI test_main" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -86,7 +84,7 @@
       <updated>1756223082267</updated>
       <workItem from="1756223083539" duration="2556000" />
       <workItem from="1756298985771" duration="15000" />
-      <workItem from="1756299052425" duration="1973000" />
+      <workItem from="1756299052425" duration="2519000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit">
       <option name="closed" value="true" />
@@ -120,7 +118,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756300170999</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Merge remote-tracking branch 'origin/main'&#10;&#10;# Conflicts:&#10;#&#9;.idea/misc.xml&#10;#&#9;.idea/py-FastAPI-dome.iml&#10;#&#9;app/models.py&#10;#&#9;app/routers/deliver.py&#10;#&#9;app/routers/load.py&#10;#&#9;app/routers/transport.py&#10;#&#9;app/schemas.py&#10;#&#9;requirements.txt">
+      <option name="closed" value="true" />
+      <created>1756301798013</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1756301798013</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
