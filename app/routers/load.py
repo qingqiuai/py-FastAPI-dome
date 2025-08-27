@@ -2,7 +2,8 @@
 import aiofiles
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from fastapi import HTTPException, UploadFile
+import imghdr, os
 from app.database import async_session
 from app import crud, schemas
 from app.config import STATIC_DIR
@@ -19,6 +20,14 @@ async def load_cargo(
     img: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
 ):
+    # 1. 类型检查
+    if imghdr.what(None, h=await img.read()) not in {"jpeg", "png"}:
+        raise HTTPException(400, "请上传 jpg/png 图片")
+    await img.seek(0)  # 重置指针
+
+    # 2. 大小限制 5 MB
+    if img.size > 5 * 1024 * 1024:
+        raise HTTPException(413, "图片超过 5 MB")
     if req.total_qty <= 0:
         raise HTTPException(400, "total_qty must be > 0")
 

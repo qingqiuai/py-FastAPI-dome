@@ -4,7 +4,7 @@ from typing import Sequence
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
-# from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError
 # from loguru import logger
 from app.models import CargoOrder, CargoItem
 
@@ -69,10 +69,13 @@ async def create_items_bulk(
         )
         for idx, code in enumerate(barcodes)
     ]
-    batch_size = 500
-    for i in range(0, len(items), batch_size):
+    try:
         async with session.begin_nested():
-            session.add_all(items[i : i + batch_size])
+            session.add_all(items)
+    except IntegrityError as e:
+        await session.rollback()
+        from http.client import HTTPException
+        raise HTTPException(409, "条码已存在") from e
     return items
 
 async def mark_items_delivered(

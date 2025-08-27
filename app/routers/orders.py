@@ -1,12 +1,12 @@
 # app/routers/orders.py
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-# from datetime import datetime
+from datetime import datetime
 from typing import List
 
 from app.database import async_session
 from app import crud
-from app.schemas import OrderOut, OrderQuery
+from app.schemas import OrderOut
 
 router = APIRouter(tags=["Orders"])
 
@@ -15,15 +15,24 @@ async def get_db():
         yield session
 
 
-# ---------------- 查询（原 query 功能） ----------------
-@router.post("/orders/by-date", response_model=List[OrderOut])
-async def query_orders_by_date(
-    q: OrderQuery,
-    limit: int = Query(100, le=1000, description="每页条数"),
-    offset: int = Query(0, ge=0, description="偏移量"),
+# ---------- 1. 分页查询（POST + body） ----------
+from pydantic import BaseModel
+
+class OrderQueryBody(BaseModel):
+    start: datetime
+    end: datetime
+    limit: int = 100
+    offset: int = 0
+
+
+@router.post("/orders/search", response_model=List[OrderOut])
+async def search_orders(
+    body: OrderQueryBody,
     db: AsyncSession = Depends(get_db),
 ):
-    orders = await crud.list_orders_by_date(db, q.start, q.end, limit, offset)
+    orders = await crud.list_orders_by_date(
+        db, body.start, body.end, body.limit, body.offset
+    )
     return [
         OrderOut(
             id=o.id,
@@ -38,7 +47,7 @@ async def query_orders_by_date(
     ]
 
 
-# ---------------- 删除订单 ----------------
+# ---------- 2. 删除订单 ----------
 @router.delete("/orders/{order_id}")
 async def delete_order(
     order_id: str,
@@ -50,14 +59,13 @@ async def delete_order(
     return {"ok": True}
 
 
-# ---------------- 修改订单 ----------------
+# ---------- 3. 修改订单 ----------
 @router.patch("/orders/{order_id}", response_model=OrderOut)
 async def update_order(
     order_id: str,
     payload: dict,
     db: AsyncSession = Depends(get_db),
 ):
-    # 简单实现：只允许改少量字段
     allowed = {"customer_name", "customer_phone", "customer_addr"}
     payload = {k: v for k, v in payload.items() if k in allowed}
     if not payload:
