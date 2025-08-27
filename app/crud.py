@@ -1,7 +1,7 @@
 # app/crud.py
 import uuid
 from typing import Sequence
-
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update
@@ -69,3 +69,17 @@ async def mark_items_delivered(
         .values(delivered=True)
     )
     await session.commit()
+
+async def list_orders_by_date(
+    session: AsyncSession,
+    start: datetime,
+    end: datetime,
+) -> Sequence[CargoOrder]:
+    stmt = (
+        select(CargoOrder)
+        .where(CargoOrder.created_at >= start)
+        .where(CargoOrder.created_at <= end)
+        .order_by(CargoOrder.created_at.desc())
+    )
+    res = await session.execute(stmt)
+    return res.scalars().all()

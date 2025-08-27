@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+# app/routers/load.py
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -7,21 +8,21 @@ from app import crud, schemas
 
 router = APIRouter(tags=["Load"])
 
-# 依赖：获取 DB Session
 async def get_db():
     async with async_session() as session:
         yield session
 
+
 @router.post("/load", response_model=List[schemas.LoadResponseItem])
 async def load_cargo(
-    req: schemas.LoadRequest,
-    files: List[UploadFile] = File(...),
+    req: schemas.LoadRequest,          # JSON 参数
+    img: UploadFile = File(...),      # 只上传 1 张图
     db: AsyncSession = Depends(get_db),
 ):
     """
-    创建订单并批量生成货物条码
-    - 使用 UUID 保证 order_id 唯一
-    - 一次性插入所有 CargoItem，减少往返
+    1. 根据 req.total_qty 生成条码
+    2. 同一张图片保存到 static/<barcode>.jpg
+    3. 返回条码列表
     """
     # 1. 创建订单
     order = await crud.create_order(
@@ -29,17 +30,17 @@ async def load_cargo(
         customer_name=req.customer_name,
         customer_phone=req.customer_phone,
         customer_addr=req.customer_addr,
-        total_qty=len(files),
+        total_qty=req.total_qty,
     )
 
-    # 2. 生成条码 & 写入 CargoItem
-    barcodes = [f"{order.id}-{idx+1:04d}" for idx in range(len(files))]
+    # 2. 按 total_qty 生成条码
+    barcodes = [f"{order.id}-{idx+1:04d}" for idx in range(req.total_qty)]
     items = await crud.create_items_bulk(db, order.id, barcodes)
 
-    # 3. 保存上传图片（这里仅演示保存到本地 static）
-    for idx, file in enumerate(files):
-        content = await file.read()
-        img_path = f"static/{items[idx].id}.jpg"
+    # 3. 把同一张图片写入每一条货物记录
+    content = await img.read()
+    for item in items:
+        img_path = f"static/{item.barcode}.jpg"
         with open(img_path, "wb") as f:
             f.write(content)
 
