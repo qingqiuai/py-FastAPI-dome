@@ -1,9 +1,11 @@
-import uuid, datetime
+import uuid
+from datetime import datetime
 from typing import Sequence
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
-from sqlalchemy.exc import IntegrityError
-from loguru import logger
+# from sqlalchemy.exc import IntegrityError
+# from loguru import logger
 from app.models import CargoOrder, CargoItem
 
 # ---------- Order ----------
@@ -32,8 +34,8 @@ async def get_order(session: AsyncSession, order_id: str) -> CargoOrder | None:
 
 async def list_orders_by_date(
     session: AsyncSession,
-    start: datetime.datetime,
-    end: datetime.datetime,
+    start: datetime,
+    end: datetime,
     limit: int = 100,
     offset: int = 0,
 ) -> Sequence[CargoOrder]:
@@ -49,10 +51,8 @@ async def list_orders_by_date(
 
 async def delete_order(session: AsyncSession, order_id: str) -> bool:
     async with session.begin():
-        res = await session.execute(
-            delete(CargoOrder).where(CargoOrder.id == order_id)
-        )
-        return res.rowcount > 0
+        res = await session.execute(delete(CargoOrder).where(CargoOrder.id == order_id))
+        return bool(res.rowcount) > 0
 
 # ---------- Item ----------
 async def create_items_bulk(
@@ -84,4 +84,4 @@ async def mark_items_delivered(
             .where(CargoItem.id.in_(item_ids), CargoItem.delivered.is_(False))
             .values(delivered=True)
         )
-        return res.rowcount
+        return bool(res.rowcount)

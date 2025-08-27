@@ -1,7 +1,8 @@
 # app/models.py
-from sqlalchemy import Column, Integer, String, DateTime, Enum, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Enum, Text, Boolean, Index
 from sqlalchemy.ext.declarative import declarative_base
 import enum, datetime
+from datetime import datetime, timezone
 
 Base = declarative_base()
 
@@ -26,7 +27,7 @@ class CargoOrder(Base):
     customer_addr = Column(Text, nullable=False)
     total_qty = Column(Integer, default=0)
     status = Column(Enum(OrderStatus), default=OrderStatus.PENDING)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
 Index("idx_order_created", CargoOrder.created_at)
 
