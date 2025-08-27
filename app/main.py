@@ -1,14 +1,44 @@
+### 修改：重命名避免遮蔽 & 显式 lifespan 使用
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.database import init_db
 from app.routers import load, transport, deliver, orders
+from app.exceptions import register_exception_handlers
+from app.config import STATIC_DIR
 
-app = FastAPI(title="Cargo API")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.include_router(load.router, prefix="/api")
-app.include_router(transport.router, prefix="/api")
-app.include_router(deliver.router, prefix="/api")
-app.include_router(orders.router, prefix="/api")
-@app.on_event("startup")
-async def on_start():
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+    """应用生命周期控制"""
     await init_db()
+    yield
+
+fastapi_app = FastAPI(title="Cargo API", lifespan=lifespan)
+
+# CORS
+fastapi_app.add_middleware(
+    CORSMiddleware,     # type: ignore[arg-type]
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# static
+fastapi_app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# routers
+fastapi_app.include_router(load.router, prefix="/api")
+fastapi_app.include_router(transport.router, prefix="/api")
+fastapi_app.include_router(deliver.router, prefix="/api")
+fastapi_app.include_router(orders.router, prefix="/api")
+
+# exception
+register_exception_handlers(fastapi_app)
+
+# 导出 ASGI 入口名仍为 app
+app = fastapi_app

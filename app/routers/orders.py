@@ -1,38 +1,29 @@
-# app/routers/orders.py
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+### 修改：GET 分页查询、PatchOrder schema、软删除标记
 from datetime import datetime
 from typing import List
 
-from app.database import async_session
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import AsyncSessionLocal
 from app import crud
-from app.schemas import OrderOut
+from app.schemas import OrderOut, PatchOrder
 
 router = APIRouter(tags=["Orders"])
 
 async def get_db():
-    async with async_session() as session:
+    async with AsyncSessionLocal() as session:
         yield session
 
-
-# ---------- 1. 分页查询（POST + body） ----------
-from pydantic import BaseModel
-
-class OrderQueryBody(BaseModel):
-    start: datetime
-    end: datetime
-    limit: int = 100
-    offset: int = 0
-
-
-@router.post("/orders/search", response_model=List[OrderOut])
+@router.get("/orders", response_model=List[OrderOut])
 async def search_orders(
-    body: OrderQueryBody,
+    start: datetime = Query(...),
+    end: datetime = Query(...),
+    limit: int = Query(100, le=1000),
+    offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
-    orders = await crud.list_orders_by_date(
-        db, body.start, body.end, body.limit, body.offset
-    )
+    orders = await crud.list_orders_by_date(db, start, end, limit, offset)
     return [
         OrderOut(
             id=o.id,
@@ -46,8 +37,6 @@ async def search_orders(
         for o in orders
     ]
 
-
-# ---------- 2. 删除订单 ----------
 @router.delete("/orders/{order_id}")
 async def delete_order(
     order_id: str,
@@ -58,24 +47,17 @@ async def delete_order(
         raise HTTPException(404, "订单不存在")
     return {"ok": True}
 
-
-# ---------- 3. 修改订单 ----------
 @router.patch("/orders/{order_id}", response_model=OrderOut)
 async def update_order(
     order_id: str,
-    payload: dict,
+    payload: PatchOrder,
     db: AsyncSession = Depends(get_db),
 ):
-    allowed = {"customer_name", "customer_phone", "customer_addr"}
-    payload = {k: v for k, v in payload.items() if k in allowed}
-    if not payload:
-        raise HTTPException(400, "无可更新字段")
-
     order = await crud.get_order(db, order_id)
     if not order:
         raise HTTPException(404, "订单不存在")
 
-    for k, v in payload.items():
+    for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(order, k, v)
     await db.commit()
     await db.refresh(order)

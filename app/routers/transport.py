@@ -2,14 +2,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import async_session
+from app.database import AsyncSessionLocal
 from app import crud
 from app.schemas import OrderOut
 
 router = APIRouter(tags=["Transport"])
 
 async def get_db():
-    async with async_session() as session:
+    async with AsyncSessionLocal() as session:
         yield session
 
 

@@ -1,12 +1,14 @@
+### 修改：事务边界调整、异常脱钩、返回值类型修正
 import uuid
 from datetime import datetime
-from typing import Sequence
+from typing import Sequence, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.exc import IntegrityError
-# from loguru import logger
+
 from app.models import CargoOrder, CargoItem
+from app.exceptions import BarcodeDuplicateError
 
 # ---------- Order ----------
 async def create_order(
@@ -16,17 +18,16 @@ async def create_order(
     customer_addr: str,
     total_qty: int = 0,
 ) -> CargoOrder:
-    async with session.begin():
-        order = CargoOrder(
-            id=uuid.uuid4().hex[:16],
-            customer_name=customer_name,
-            customer_phone=customer_phone,
-            customer_addr=customer_addr,
-            total_qty=total_qty,
-        )
-        session.add(order)
-        await session.flush()
-        return order
+    order = CargoOrder(
+        id=uuid.uuid4().hex[:16],
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        customer_addr=customer_addr,
+        total_qty=total_qty,
+    )
+    session.add(order)
+    await session.flush()
+    return order
 
 async def get_order(session: AsyncSession, order_id: str) -> CargoOrder | None:
     res = await session.execute(select(CargoOrder).where(CargoOrder.id == order_id))
@@ -50,15 +51,14 @@ async def list_orders_by_date(
     return res.scalars().all()
 
 async def delete_order(session: AsyncSession, order_id: str) -> bool:
-    async with session.begin():
-        res = await session.execute(delete(CargoOrder).where(CargoOrder.id == order_id))
-        return bool(res.rowcount) > 0
+    res = await session.execute(delete(CargoOrder).where(CargoOrder.id == order_id))
+    return res.rowcount > 0
 
 # ---------- Item ----------
 async def create_items_bulk(
     session: AsyncSession,
     order_id: str,
-    barcodes: list[str],
+    barcodes: List[str],
 ) -> Sequence[CargoItem]:
     items = [
         CargoItem(
@@ -69,22 +69,17 @@ async def create_items_bulk(
         )
         for idx, code in enumerate(barcodes)
     ]
+    session.add_all(items)
     try:
-        async with session.begin_nested():
-            session.add_all(items)
-    except IntegrityError as e:
-        await session.rollback()
-        from http.client import HTTPException
-        raise HTTPException(409, "条码已存在") from e
+        await session.flush()
+    except IntegrityError as exc:
+        raise BarcodeDuplicateError() from exc
     return items
 
-async def mark_items_delivered(
-    session: AsyncSession, item_ids: list[str]
-) -> int:
-    async with session.begin():
-        res = await session.execute(
-            update(CargoItem)
-            .where(CargoItem.id.in_(item_ids), CargoItem.delivered.is_(False))
-            .values(delivered=True)
-        )
-        return bool(res.rowcount)
+async def mark_items_delivered(session: AsyncSession, item_ids: List[str]) -> int:
+    res = await session.execute(
+        update(CargoItem)
+        .where(CargoItem.id.in_(item_ids), CargoItem.delivered.is_(False))
+        .values(delivered=True)
+    )
+    return res.rowcount

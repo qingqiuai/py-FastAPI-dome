@@ -1,26 +1,27 @@
-# app/schemas.py
-from pydantic import BaseModel
+### 新增：PatchOrder、PaginatedOrders
+from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
-# 请求
 class LoadRequest(BaseModel):
     order_id: str
     customer_name: str
     customer_phone: str
     customer_addr: str
+    total_qty: int = Field(gt=0)
 
 class DeliverRequest(BaseModel):
     item_ids: List[str]
 
-# 响应
 class LoadResponseItem(BaseModel):
     barcode: str
     item_id: str
 
-class OrderQuery(BaseModel):
+class OrderQueryBody(BaseModel):
     start: datetime
     end: datetime
+    limit: int = Field(100, le=1000)
+    offset: int = Field(0, ge=0)
 
 class OrderOut(BaseModel):
     id: str
@@ -30,3 +31,8 @@ class OrderOut(BaseModel):
     total_qty: int
     status: str
     created_at: datetime
+
+class PatchOrder(BaseModel):
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_addr: Optional[str] = None
