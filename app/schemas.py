@@ -1,5 +1,5 @@
 ### 新增：PatchOrder、PaginatedOrders
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import List, Optional
 
@@ -31,8 +31,13 @@ class OrderOut(BaseModel):
     total_qty: int
     status: str
     created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 
 class PatchOrder(BaseModel):
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     customer_addr: Optional[str] = None
+
+class PaginatedOrders(BaseModel):
+    total: int
+    items: List[OrderOut]

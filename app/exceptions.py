@@ -26,3 +26,8 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(BarcodeDuplicateError)
     async def barcode_dup_handler(_request: Request, _exc: BarcodeDuplicateError) -> JSONResponse:
         return JSONResponse(status_code=409, content={"detail": "条码已存在"})
+
+    @app.exception_handler(Exception)
+    async def all_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+        logger.exception("Unhandled error")
+        return JSONResponse(status_code=500, content={"detail": "服务器开小差了"})

@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Sequence, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from sqlalchemy.exc import IntegrityError
 
 from app.models import CargoOrder, CargoItem
@@ -83,3 +83,14 @@ async def mark_items_delivered(session: AsyncSession, item_ids: List[str]) -> in
         .values(delivered=True)
     )
     return res.rowcount
+
+async def count_orders_by_date(
+    session: AsyncSession,
+    start: datetime,
+    end: datetime,
+) -> int:
+    stmt = select(func.count(CargoOrder.id)).where(
+        CargoOrder.created_at >= start,
+        CargoOrder.created_at <= end,
+    )
+    return (await session.execute(stmt)).scalar_one()

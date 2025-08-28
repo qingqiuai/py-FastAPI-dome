@@ -32,10 +32,10 @@ fastapi_app.add_middleware(
 fastapi_app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # routers
-fastapi_app.include_router(load.router, prefix="/api")
-fastapi_app.include_router(transport.router, prefix="/api")
-fastapi_app.include_router(deliver.router, prefix="/api")
-fastapi_app.include_router(orders.router, prefix="/api")
+fastapi_app.include_router(load.router, prefix="/api", tags=["装车"])
+fastapi_app.include_router(transport.router, prefix="/api", tags=["运输"])
+fastapi_app.include_router(deliver.router, prefix="/api", tags=["交付"])
+fastapi_app.include_router(orders.router, prefix="/api", tags=["订单"])
 
 # exception
 register_exception_handlers(fastapi_app)

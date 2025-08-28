@@ -1,13 +1,13 @@
 ### 修改：GET 分页查询、PatchOrder schema、软删除标记
 from datetime import datetime
-from typing import List
+# from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
 from app import crud
-from app.schemas import OrderOut, PatchOrder
+from app.schemas import OrderOut, PatchOrder, PaginatedOrders
 
 router = APIRouter(tags=["Orders"])
 
@@ -15,7 +15,7 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
 
-@router.get("/orders", response_model=List[OrderOut])
+@router.get("/orders", response_model=PaginatedOrders)        #response_model=List[OrderOut]
 async def search_orders(
     start: datetime = Query(...),
     end: datetime = Query(...),
@@ -23,19 +23,25 @@ async def search_orders(
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
+    total = await crud.count_orders_by_date(db, start, end)
     orders = await crud.list_orders_by_date(db, start, end, limit, offset)
-    return [
-        OrderOut(
-            id=o.id,
-            customer_name=o.customer_name,
-            customer_phone=o.customer_phone,
-            customer_addr=o.customer_addr,
-            total_qty=o.total_qty,
-            status=o.status.value,
-            created_at=o.created_at,
-        )
-        for o in orders
-    ]
+    return PaginatedOrders(
+        total=total,
+        items=[OrderOut.model_validate(o) for o in orders],
+    )
+    # orders = await crud.list_orders_by_date(db, start, end, limit, offset)
+    # return [
+    #     OrderOut(
+    #         id=o.id,
+    #         customer_name=o.customer_name,
+    #         customer_phone=o.customer_phone,
+    #         customer_addr=o.customer_addr,
+    #         total_qty=o.total_qty,
+    #         status=o.status.value,
+    #         created_at=o.created_at,
+    #     )
+    #     for o in orders
+    # ]
 
 @router.delete("/orders/{order_id}")
 async def delete_order(

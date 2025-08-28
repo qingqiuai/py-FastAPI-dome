@@ -32,8 +32,11 @@ async def load_cargo(
         raise HTTPException(400, "请上传有效 jpeg/png 图片")
 
     # 2. 总大小（Pillow 不验证，手动读取）
-    contents = await img.read()
-    await img.seek(0)
+    try:
+        contents = await img.read()
+    finally:
+        await img.seek(0)  # ← 确保后续再读能拿到数据
+        await img.close()
     if len(contents) > 5 * 1024 * 1024:
         raise HTTPException(413, "图片超过 5 MB")
 
