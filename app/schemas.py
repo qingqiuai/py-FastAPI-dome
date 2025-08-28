@@ -37,6 +37,7 @@ class PatchOrder(BaseModel):
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     customer_addr: Optional[str] = None
+    customer_code: str = Field(min_length=1, max_length=32)
 
 class PaginatedOrders(BaseModel):
     total: int

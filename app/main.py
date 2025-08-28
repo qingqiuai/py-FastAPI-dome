@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
-from app.routers import load, transport, deliver, orders
+from app.routers import load, transport, deliver, orders, customers
 from app.exceptions import register_exception_handlers
 from app.config import STATIC_DIR
 
@@ -36,7 +36,7 @@ fastapi_app.include_router(load.router, prefix="/api", tags=["装车"])
 fastapi_app.include_router(transport.router, prefix="/api", tags=["运输"])
 fastapi_app.include_router(deliver.router, prefix="/api", tags=["交付"])
 fastapi_app.include_router(orders.router, prefix="/api", tags=["订单"])
-
+fastapi_app.include_router(customers.router, prefix="/api")
 # exception
 register_exception_handlers(fastapi_app)
 

@@ -55,3 +55,8 @@ class CargoItem(Base):
     img_path = Column(String(512))
     delivered = Column(Boolean, default=False)
     order = relationship("CargoOrder", back_populates="items")
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        index=True,
+    )

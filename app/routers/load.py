@@ -50,7 +50,11 @@ async def load_cargo(
     )
 
     # 4. 生成条码
-    barcodes = [f"{order.id}-{idx+1:05d}" for idx in range(req.total_qty)]
+    customer_code = req.customer_code  # ← 前端/后台给
+    barcodes = [
+        f"{order.id}-{customer_code}-{idx + 1:03d}"
+        for idx in range(req.total_qty)
+    ]
     items = await crud.create_items_bulk(db, order.id, barcodes)
 
     # 5. 保存图片
